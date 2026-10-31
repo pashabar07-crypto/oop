@@ -5,6 +5,8 @@
 #include <string>
 #include <iomanip>
 #include <fstream>
+#include <ctime>
+#include <cstdlib>
 
 using namespace std;
 
@@ -166,7 +168,6 @@ public:
     }
 };
 
-
 class Bus {
 private:
     string plateNumber;
@@ -240,7 +241,6 @@ bool operator==(const Bus& o1, const Bus& o2) {
 bool operator!=(const Bus& o1, const Bus& o2) {
     return o1.plateNumber != o2.plateNumber;
 }
-
 
 class Trip {
 private:
@@ -346,11 +346,63 @@ bool operator!=(const Trip& o1, const Trip& o2) {
     return o1.tripId != o2.tripId;
 }
 
+class CompletedTripRecord {
+private:
+    int recordNumber;
+    int tripId;
+    string routeName;
+    float distance;
+    string busPlate;
+    int passengersCarried;
+    float totalRevenue;
+public:
+    CompletedTripRecord() {
+        recordNumber = 0;
+        tripId = 0;
+        routeName = "Неизвестно";
+        distance = 0.0f;
+        busPlate = "---";
+        passengersCarried = 0;
+        totalRevenue = 0.0f;
+    }
+    CompletedTripRecord(int recordNumber, int tripId, string routeName, float distance, string busPlate, int passengersCarried, float totalRevenue) {
+        this->recordNumber = recordNumber;
+        this->tripId = tripId;
+        this->routeName = routeName;
+        this->distance = distance;
+        this->busPlate = busPlate;
+        this->passengersCarried = passengersCarried;
+        this->totalRevenue = totalRevenue;
+    }
+
+    int getRecordNumber() const { return recordNumber; }
+    int getTripId() const { return tripId; }
+    string getRouteName() const { return routeName; }
+    float getDistance() const { return distance; }
+    string getBusPlate() const { return busPlate; }
+    int getPassengersCarried() const { return passengersCarried; }
+    float getTotalRevenue() const { return totalRevenue; }
+
+    friend ostream& operator<<(ostream& stream, const CompletedTripRecord& obj);
+};
+
+ostream& operator<<(ostream& stream, const CompletedTripRecord& obj) {
+    stream << "| " << pad(to_string(obj.recordNumber), 5)
+        << " | " << pad(to_string(obj.tripId), 6)
+        << " | " << pad(obj.routeName, 25)
+        << " | " << pad(formatFloat(obj.distance, 1), 10)
+        << " | " << pad(obj.busPlate, 12)
+        << " | " << pad(to_string(obj.passengersCarried), 10)
+        << " | " << pad(formatFloat(obj.totalRevenue, 2), 13) << " |";
+    return stream;
+}
+
 
 const string PASS_BORDER = "+--------------------------+----------+----------------+----------------+";
 const string BUS_BORDER = "+----------------+----------------------+--------------+----------------+";
 const string TRIP_BORDER = "+--------+----------------+----------------+------------+----------------+------------+-------------+";
 const string FIN_BORDER = "+--------+-----------------------------+------------+--------------+--------------+---------------+";
+const string ARCHIVE_BORDER = "+-------+--------+---------------------------+------------+--------------+------------+---------------+";
 
 void printPassengerHeader(ostream& out) {
     out << PASS_BORDER << "\n";
@@ -393,6 +445,18 @@ void printFinanceHeader(ostream& out) {
     out << FIN_BORDER << "\n";
 }
 
+void printArchiveHeader(ostream& out) {
+    out << ARCHIVE_BORDER << "\n";
+    out << "| " << pad("№ п/п", 5)
+        << " | " << pad("Рейс", 6)
+        << " | " << pad("Маршрут перевозки", 25)
+        << " | " << pad("Дист. (км)", 10)
+        << " | " << pad("Автобус", 12)
+        << " | " << pad("Перевезено", 10)
+        << " | " << pad("Выручка (BYN)", 13) << " |\n";
+    out << ARCHIVE_BORDER << "\n";
+}
+
 void syncAllTripTickets(vector<Passenger>& passengers, list<Trip>& trips) {
     for (list<Trip>::iterator t = trips.begin(); t != trips.end(); t++) {
         int count = 0;
@@ -408,7 +472,7 @@ void syncAllTripTickets(vector<Passenger>& passengers, list<Trip>& trips) {
 void menuVector(vector<Passenger>& passengers, list<Trip>& trips) {
     int choice = -1;
     while (choice != 0) {
-        cout << "\n--- УПРАВЛЕНИЕ ПАССАЖИРАМИ (Контейнер std::vector) ---\n";
+        cout << "\n--- УПРАВЛЕНИЕ ПАССАЖИРАМИ (Контейнер vector) ---\n";
         cout << "1. Просмотр всех пассажиров (на экран)\n";
         cout << "2. Вывод таблицы пассажиров в файл (passengers.txt)\n";
         cout << "3. Добавить пассажира (push_back)\n";
@@ -631,7 +695,7 @@ void menuVector(vector<Passenger>& passengers, list<Trip>& trips) {
 void menuArray(array<Bus, 5>& park) {
     int choice = -1;
     while (choice != 0) {
-        cout << "\n--- УПРАВЛЕНИЕ АВТОПАРКОМ (Контейнер std::array<Bus, 5>) ---\n";
+        cout << "\n--- УПРАВЛЕНИЕ АВТОПАРКОМ (Контейнер array<Bus, 5>) ---\n";
         cout << "1. Просмотр всех боксов автопарка (на экран)\n";
         cout << "2. Вывод автопарка в файл (park.txt)\n";
         cout << "3. Добавить автобус в свободный бокс\n";
@@ -841,7 +905,7 @@ void menuArray(array<Bus, 5>& park) {
 void menuList(list<Trip>& trips, array<Bus, 5>& park, vector<Passenger>& passengers) {
     int choice = -1;
     while (choice != 0) {
-        cout << "\n--- УПРАВЛЕНИЕ РЕЙСАМИ (Контейнер std::list) ---\n";
+        cout << "\n--- УПРАВЛЕНИЕ РЕЙСАМИ (Контейнер list) ---\n";
         cout << "1. Просмотр всех рейсов (на экран)\n";
         cout << "2. Вывод расписания рейсов в файл (trips.txt)\n";
         cout << "3. Добавить рейс в конец списка (push_back)\n";
@@ -849,7 +913,7 @@ void menuList(list<Trip>& trips, array<Bus, 5>& park, vector<Passenger>& passeng
         cout << "5. Удалить рейс по номеру (erase)\n";
         cout << "6. Поиск рейса по пункту назначения\n";
         cout << "7. Фильтр рейсов по максимальной цене билета\n";
-        cout << "8. Сортировка рейсов по цене билета (list::sort)\n";
+        cout << "8. Сортировка рейсов по цене билета (sort)\n";
         cout << "0. Назад в главное меню\n";
         while (true) {
             cout << "Ваш выбор: ";
@@ -900,26 +964,19 @@ void menuList(list<Trip>& trips, array<Bus, 5>& park, vector<Passenger>& passeng
             string startP, endP;
             float dist, price;
 
+            srand((unsigned int)time(nullptr));
             while (true) {
-                cout << "Введите уникальный ID рейса (> 0): ";
-                if (cin >> id && id > 0) {
-                    cin.ignore(10000, '\n');
-                    bool exists = false;
-                    for (list<Trip>::iterator it = trips.begin(); it != trips.end(); it++) {
-                        if (it->getTripId() == id) {
-                            exists = true;
-                            break;
-                        }
-                    }
-                    if (!exists) {
+                id = 100 + rand() % 900;
+                bool exists = false;
+                for (list<Trip>::iterator it = trips.begin(); it != trips.end(); it++) {
+                    if (it->getTripId() == id) {
+                        exists = true;
                         break;
                     }
-                    cout << "Ошибка! Рейс с таким ID уже существует в расписании.\n";
                 }
-                else {
-                    cout << "Ошибка! ID должен быть положительным числом.\n";
-                    cin.clear();
-                    cin.ignore(10000, '\n');
+                if (!exists) {
+                    cout << "Сгенерирован уникальный номер рейса (ID): " << id << "\n";
+                    break;
                 }
             }
             while (true) {
@@ -1137,23 +1194,25 @@ void menuList(list<Trip>& trips, array<Bus, 5>& park, vector<Passenger>& passeng
 }
 
 
-void menuTicketsAndReports(vector<Passenger>& passengers, list<Trip>& trips) {
+void menuTicketsAndReports(vector<Passenger>& passengers, list<Trip>& trips, vector<CompletedTripRecord>& completedHistory) {
     int choice = -1;
     while (choice != 0) {
         cout << "\n--- КАССА БИЛЕТОВ, ЗАВЕРШЕНИЕ РЕЙСОВ И ОТЧЕТНОСТЬ ---\n";
         cout << "1. Оформить покупку билета пассажиру на рейс\n";
         cout << "2. Оформить возврат (отказ от) билета\n";
-        cout << "3. Подтвердить завершение рейса (отчет в файл + возобновление мест)\n";
+        cout << "3. Подтвердить завершение рейса (сохранение в архив + освобождение мест)\n";
         cout << "4. Показать посадочную ведомость конкретного рейса\n";
-        cout << "5. Финансовая ведомость по рейсам (выручка и заполняемость)\n";
+        cout << "5. Финансовая ведомость по текущим рейсам (выручка и заполняемость)\n";
+        cout << "6. Архивная ведомость завершенных рейсов (Экран + Файл)\n";
+        cout << "7. Просмотр завершенных рейсов из файла (completed_trips_report.txt)\n";
         cout << "0. Назад в главное меню\n";
         while (true) {
             cout << "Ваш выбор: ";
-            if (cin >> choice && choice >= 0 && choice <= 5) {
+            if (cin >> choice && choice >= 0 && choice <= 7) {
                 cin.ignore(10000, '\n');
                 break;
             }
-            cout << "Ошибка! Введите пункт меню от 0 до 5.\n";
+            cout << "Ошибка! Введите пункт меню от 0 до 7.\n";
             cin.clear();
             cin.ignore(10000, '\n');
         }
@@ -1315,19 +1374,27 @@ void menuTicketsAndReports(vector<Passenger>& passengers, list<Trip>& trips) {
                     string busPlate = (it->getBus() && it->getBus()->getIsActive())
                         ? it->getBus()->getPlateNumber()
                         : "Не назначен";
+                    int carried = it->getSoldTickets();
+                    float revenue = it->getRevenue();
+                    int recNum = (int)completedHistory.size() + 1;
+
+                    // Сохраняем запись в оперативный архив завершенных рейсов
+                    completedHistory.push_back(CompletedTripRecord(
+                        recNum, tId, routeName, it->getRoute().getDistance(), busPlate, carried, revenue
+                    ));
 
                     cout << "\n====================================================================\n";
-                    cout << "             ОТЧЕТ О ЗАВЕРШЕНИИ РЕЙСА №" << tId << "\n";
+                    cout << "             ОТЧЕТ О ЗАВЕРШЕНИИ РЕЙСА №" << tId << " (Архивная запись #" << recNum << ")\n";
                     cout << "====================================================================\n";
                     fout << "====================================================================\n";
-                    fout << "             ОТЧЕТ О ЗАВЕРШЕНИИ РЕЙСА №" << tId << "\n";
+                    fout << "             ОТЧЕТ О ЗАВЕРШЕНИИ РЕЙСА №" << tId << " (Архивная запись #" << recNum << ")\n";
                     fout << "====================================================================\n";
 
                     string tripSummary = "Маршрут следования : " + routeName + "\n"
                         + "Дистанция пути     : " + formatFloat(it->getRoute().getDistance(), 1) + " км\n"
                         + "Автобус рейса      : " + busPlate + "\n"
-                        + "Перевезено человек : " + to_string(it->getSoldTickets()) + "\n"
-                        + "Полученная выручка : " + formatFloat(it->getRevenue(), 2) + " BYN\n";
+                        + "Перевезено человек : " + to_string(carried) + "\n"
+                        + "Полученная выручка : " + formatFloat(revenue, 2) + " BYN\n";
 
                     cout << tripSummary;
                     fout << tripSummary;
@@ -1352,7 +1419,7 @@ void menuTicketsAndReports(vector<Passenger>& passengers, list<Trip>& trips) {
 
                     it->setSoldTickets(0);
 
-                    cout << "\n[Успешно]: Рейс №" << tId << " завершен. Отчет занесен в completed_trips_report.txt!\n";
+                    cout << "\n[Успешно]: Рейс №" << tId << " завершен. Запись добавлена в архивную отчетность и в файл completed_trips_report.txt!\n";
                     break;
                 }
             }
@@ -1389,10 +1456,10 @@ void menuTicketsAndReports(vector<Passenger>& passengers, list<Trip>& trips) {
         }
         case 5: {
             syncAllTripTickets(passengers, trips);
-            float totalCompanyRevenue = 0.0f;
-            int totalSoldTickets = 0;
+            float totalActiveRevenue = 0.0f;
+            int totalActiveTickets = 0;
 
-            cout << "\nФИНАНСОВАЯ ВЕДОМОСТЬ ПРЕДПРИЯТИЯ ПО ВСЕМ РЕЙСАМ:\n";
+            cout << "\nФИНАНСОВАЯ ВЕДОМОСТЬ ПРЕДПРИЯТИЯ ПО ТЕКУЩИМ РЕЙСАМ:\n";
             printFinanceHeader(cout);
             for (list<Trip>::iterator it = trips.begin(); it != trips.end(); it++) {
                 string routeName = it->getRoute().getStartPoint() + " -> " + it->getRoute().getEndPoint();
@@ -1401,8 +1468,8 @@ void menuTicketsAndReports(vector<Passenger>& passengers, list<Trip>& trips) {
                 if (freeSeats < 0) freeSeats = 0;
                 float rev = it->getRevenue();
 
-                totalCompanyRevenue += rev;
-                totalSoldTickets += sold;
+                totalActiveRevenue += rev;
+                totalActiveTickets += sold;
 
                 cout << "| " << pad(to_string(it->getTripId()), 6)
                     << " | " << pad(routeName, 27)
@@ -1412,8 +1479,79 @@ void menuTicketsAndReports(vector<Passenger>& passengers, list<Trip>& trips) {
                     << " | " << pad(formatFloat(rev, 2), 13) << " |\n";
             }
             cout << FIN_BORDER << "\n";
-            cout << "Всего продано билетов: " << totalSoldTickets
-                << " | Суммарная выручка предприятия: " << formatFloat(totalCompanyRevenue, 2) << " BYN\n";
+
+            float archiveRevenue = 0.0f;
+            int archivePassengers = 0;
+            for (int i = 0; i < (int)completedHistory.size(); i++) {
+                archiveRevenue += completedHistory[i].getTotalRevenue();
+                archivePassengers += completedHistory[i].getPassengersCarried();
+            }
+
+            cout << "Текущие рейсы     -> Продано билетов: " << totalActiveTickets
+                << " | Ожидаемая выручка: " << formatFloat(totalActiveRevenue, 2) << " BYN\n";
+            cout << "Завершенные рейсы -> Выполнено рейсов: " << completedHistory.size()
+                << " | Перевезено пасс.: " << archivePassengers
+                << " | Фактическая выручка: " << formatFloat(archiveRevenue, 2) << " BYN\n";
+            cout << "ОБЩИЙ ИТОГ        -> Суммарный оборот предприятия: "
+                << formatFloat(totalActiveRevenue + archiveRevenue, 2) << " BYN\n";
+            break;
+        }
+        case 6: {
+            if (completedHistory.empty()) {
+                cout << "В текущей сессии еще нет завершенных рейсов.\n";
+                break;
+            }
+
+            ofstream fout("completed_summary_table.txt");
+            cout << "\nАРХИВНАЯ ВЕДОМОСТЬ ЗАВЕРШЕННЫХ РЕЙСОВ:\n";
+            printArchiveHeader(cout);
+            if (fout.is_open()) {
+                fout << "АРХИВНАЯ ВЕДОМОСТЬ ЗАВЕРШЕННЫХ РЕЙСОВ:\n";
+                printArchiveHeader(fout);
+            }
+
+            int totalPass = 0;
+            float totalRev = 0.0f;
+            float totalDist = 0.0f;
+
+            for (int i = 0; i < (int)completedHistory.size(); i++) {
+                cout << completedHistory[i] << endl;
+                if (fout.is_open()) {
+                    fout << completedHistory[i] << endl;
+                }
+                totalPass += completedHistory[i].getPassengersCarried();
+                totalRev += completedHistory[i].getTotalRevenue();
+                totalDist += completedHistory[i].getDistance();
+            }
+
+            cout << ARCHIVE_BORDER << "\n";
+            string totalLine = "Итого выполнено рейсов: " + to_string(completedHistory.size())
+                + " | Общий пробег: " + formatFloat(totalDist, 1) + " км"
+                + " | Перевезено пассажиров: " + to_string(totalPass)
+                + " | Выручка: " + formatFloat(totalRev, 2) + " BYN\n";
+            cout << totalLine;
+
+            if (fout.is_open()) {
+                fout << ARCHIVE_BORDER << "\n";
+                fout << totalLine;
+                fout.close();
+                cout << "Сводная таблица завершенных рейсов сохранена в файл completed_summary_table.txt!\n";
+            }
+            break;
+        }
+        case 7: {
+            ifstream fin("completed_trips_report.txt");
+            if (!fin.is_open()) {
+                cout << "Архивный файл completed_trips_report.txt еще не создан (завершите хотя бы один рейс).\n";
+                break;
+            }
+            cout << "\n--- СОДЕРЖИМОЕ АРХИВНОГО ФАЙЛА (completed_trips_report.txt) ---\n";
+            string line;
+            while (getline(fin, line)) {
+                cout << line << "\n";
+            }
+            fin.close();
+            cout << "--- КОНЕЦ АРХИВНОГО ФАЙЛА ---\n";
             break;
         }
         case 0:
@@ -1423,7 +1561,7 @@ void menuTicketsAndReports(vector<Passenger>& passengers, list<Trip>& trips) {
 }
 
 
-void lab3(){
+void lab3() {
     system("cls");
 
     array<Bus, 5> park{
@@ -1445,6 +1583,8 @@ void lab3(){
     trips.push_back(Trip(102, Route("Минск", "Гродно", 278.0f), &park[1], 28.00f, 1));
     trips.push_back(Trip(103, Route("Минск", "Гомель", 312.0f), &park[2], 32.00f, 0));
 
+    vector<CompletedTripRecord> completedHistory;
+
     syncAllTripTickets(passengers, trips);
 
     int mainChoice = -1;
@@ -1452,9 +1592,9 @@ void lab3(){
         cout << "\n==========================================================\n";
         cout << "   СИСТЕМА УЧЕТА ДАННЫХ ПО ПАССАЖИРСКИМ ПЕРЕВОЗКАМ\n";
         cout << "==========================================================\n";
-        cout << "1. Работа с пассажирами (контейнер std::vector)\n";
-        cout << "2. Работа с автопарком (контейнер std::array)\n";
-        cout << "3. Работа с рейсами (контейнер std::list)\n";
+        cout << "1. Работа с пассажирами (контейнер vector)\n";
+        cout << "2. Работа с автопарком (контейнер array)\n";
+        cout << "3. Работа с рейсами (контейнер list)\n";
         cout << "4. Касса, завершение рейсов и ведомости\n";
         cout << "5. Сводный табличный отчет всех данных (Экран + Файл)\n";
         cout << "0. Выход из программы\n";
@@ -1480,7 +1620,7 @@ void lab3(){
             menuList(trips, park, passengers);
             break;
         case 4:
-            menuTicketsAndReports(passengers, trips);
+            menuTicketsAndReports(passengers, trips, completedHistory);
             break;
         case 5: {
             syncAllTripTickets(passengers, trips);
@@ -1521,8 +1661,8 @@ void lab3(){
 
             float totalRev = 0.0f;
             int totalSold = 0;
-            cout << "\n>>> 4. ФИНАНСОВАЯ ВЕДОМОСТЬ ПРЕДПРИЯТИЯ <<<\n";
-            fout << ">>> 4. ФИНАНСОВАЯ ВЕДОМОСТЬ ПРЕДПРИЯТИЯ <<<\n";
+            cout << "\n>>> 4. ФИНАНСОВАЯ ВЕДОМОСТЬ ПО ТЕКУЩИМ РЕЙСАМ <<<\n";
+            fout << ">>> 4. ФИНАНСОВАЯ ВЕДОМОСТЬ ПО ТЕКУЩИМ РЕЙСАМ <<<\n";
             printFinanceHeader(cout);
             printFinanceHeader(fout);
             for (list<Trip>::iterator it = trips.begin(); it != trips.end(); it++) {
@@ -1546,10 +1686,43 @@ void lab3(){
             cout << FIN_BORDER << "\n";
             fout << FIN_BORDER << "\n";
 
-            string summary = "Всего продано билетов: " + to_string(totalSold)
-                + " | Суммарная выручка: " + formatFloat(totalRev, 2) + " BYN\n";
-            cout << summary;
-            fout << summary;
+            string activeSummary = "Активные билеты: " + to_string(totalSold)
+                + " | Ожидаемая выручка по текущим рейсам: " + formatFloat(totalRev, 2) + " BYN\n\n";
+            cout << activeSummary;
+            fout << activeSummary;
+
+            cout << ">>> 5. ОТЧЕТНОСТЬ ПО ЗАВЕРШЕННЫМ РЕЙСАМ (Архив) <<<\n";
+            fout << ">>> 5. ОТЧЕТНОСТЬ ПО ЗАВЕРШЕННЫМ РЕЙСАМ (Архив) <<<\n";
+            float archiveRev = 0.0f;
+            int archivePass = 0;
+            if (completedHistory.empty()) {
+                cout << "Завершенных рейсов еще не зарегистрировано.\n";
+                fout << "Завершенных рейсов еще не зарегистрировано.\n";
+            }
+            else {
+                printArchiveHeader(cout);
+                printArchiveHeader(fout);
+                for (int i = 0; i < (int)completedHistory.size(); i++) {
+                    cout << completedHistory[i] << endl;
+                    fout << completedHistory[i] << endl;
+                    archiveRev += completedHistory[i].getTotalRevenue();
+                    archivePass += completedHistory[i].getPassengersCarried();
+                }
+                cout << ARCHIVE_BORDER << "\n";
+                fout << ARCHIVE_BORDER << "\n";
+                string archSum = "Выполнено рейсов: " + to_string(completedHistory.size())
+                    + " | Перевезено пассажиров: " + to_string(archivePass)
+                    + " | Фактическая выручка: " + formatFloat(archiveRev, 2) + " BYN\n";
+                cout << archSum;
+                fout << archSum;
+            }
+
+            string grandTotal = "\n==========================================================\n"
+                "ИТОГО ОБЩИЙ ОБОРОТ ПРЕДПРИЯТИЯ (Текущие + Завершенные): "
+                + formatFloat(totalRev + archiveRev, 2) + " BYN\n"
+                "==========================================================\n";
+            cout << grandTotal;
+            fout << grandTotal;
 
             fout.close();
             cout << "\nПолный сводный отчет сохранен в файл full_report.txt!\n";
